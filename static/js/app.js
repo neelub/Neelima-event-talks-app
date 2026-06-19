@@ -51,9 +51,8 @@ function setupTheme() {
   const savedTheme = localStorage.getItem('theme') || 'dark';
   setTheme(savedTheme);
   
-  elements.themeToggle.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  elements.themeToggle.addEventListener('change', () => {
+    const newTheme = elements.themeToggle.checked ? 'light' : 'dark';
     setTheme(newTheme);
   });
 }
@@ -62,21 +61,7 @@ function setTheme(theme) {
   state.theme = theme;
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('theme', theme);
-  
-  // Update icon inside theme toggle button
-  if (theme === 'light') {
-    elements.themeToggle.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
-      </svg>
-    `;
-  } else {
-    elements.themeToggle.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-      </svg>
-    `;
-  }
+  elements.themeToggle.checked = (theme === 'light');
 }
 
 // Event Listeners Setup
@@ -85,6 +70,12 @@ function setupEventListeners() {
   elements.refreshBtn.addEventListener('click', () => {
     fetchNotes(true);
   });
+  
+  // Export CSV Button
+  const exportCsvBtn = document.getElementById('export-csv-btn');
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', exportToCSV);
+  }
   
   // Search Input (Debounced search)
   let searchTimeout;
@@ -323,11 +314,14 @@ function renderNotes() {
             </div>
             
             <div class="card-actions-right">
-              <button class="btn-card-action" onclick="copyCardLink(event, '${entry.link}')">
-                ${icons.copy} Copy Link
+              <button class="btn-card-action" onclick="copyCardText(event, '${update.id}')" title="Copy release note text to clipboard">
+                ${icons.copy} Copy Text
+              </button>
+              <button class="btn-card-action" onclick="copyCardLink(event, '${entry.link}')" title="Copy permanent link to clipboard">
+                ${icons.externalLink} Copy Link
               </button>
               <button class="btn-card-action btn-tweet-action" onclick="openTweetDrawer(event, '${update.id}')">
-                ${icons.twitter} Tweet Update
+                ${icons.twitter} Tweet
               </button>
             </div>
           </div>
@@ -532,3 +526,67 @@ function updateCharCount() {
     elements.progressCircle.style.stroke = '#1d9bf0'; // Twitter Blue
   }
 }
+
+// Export to CSV Function
+function exportToCSV() {
+  if (state.filteredNotes.length === 0) {
+    showToast('No notes available to export.');
+    return;
+  }
+  
+  // Build CSV rows
+  let csvRows = [];
+  csvRows.push(['Date', 'Update Type', 'Link', 'Content Text']);
+  
+  state.filteredNotes.forEach(entry => {
+    entry.updates.forEach(update => {
+      // Escape quotes by doubling them and wrapping fields in double quotes
+      const escapedText = update.text_content.replace(/"/g, '""');
+      const escapedDate = entry.date.replace(/"/g, '""');
+      const escapedType = update.type.replace(/"/g, '""');
+      const escapedLink = entry.link.replace(/"/g, '""');
+      
+      csvRows.push([
+        `"${escapedDate}"`,
+        `"${escapedType}"`,
+        `"${escapedLink}"`,
+        `"${escapedText}"`
+      ]);
+    });
+  });
+  
+  const csvContent = csvRows.map(row => row.join(',')).join('\n');
+  
+  // Create a blob and download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `bigquery_release_notes_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('Release notes exported to CSV!');
+}
+
+// Copy Card text content to clipboard
+window.copyCardText = function(event, updateId) {
+  event.stopPropagation();
+  
+  // Find update
+  let foundUpdate = null;
+  for (const entry of state.allNotes) {
+    const u = entry.updates.find(item => item.id === updateId);
+    if (u) {
+      foundUpdate = u;
+      break;
+    }
+  }
+  
+  if (!foundUpdate) return;
+  
+  navigator.clipboard.writeText(foundUpdate.text_content).then(() => {
+    showToast('Update text copied to clipboard!');
+  });
+};

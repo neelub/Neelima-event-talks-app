@@ -234,6 +234,86 @@ header {
   box-shadow: var(--shadow-glow);
 }
 
+/* Theme Toggle Switch */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 0.35rem 0.65rem;
+  border-radius: 20px;
+}
+
+.theme-label-icon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+[data-theme="light"] .theme-label-icon[title="Light Mode"] {
+  color: var(--primary-color);
+}
+
+[data-theme="dark"] .theme-label-icon[title="Dark Mode"] {
+  color: var(--primary-color);
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-secondary);
+  transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:checked + .slider {
+  background-color: var(--primary-glow);
+  border-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+  background-color: var(--primary-color);
+}
+
+.slider.round {
+  border-radius: 20px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
 /* Toolbar Control Panel */
 .toolbar {
   background: var(--panel-bg);
