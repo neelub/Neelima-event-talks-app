@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BigQuery Release Notes Tracker</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="A modern web dashboard to view and track official BigQuery release notes. Select updates and tweet about them instantly.">
+  <meta name="keywords" content="BigQuery, Google Cloud, Release Notes, Twitter, X, Intent, Tracker">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="icon" type="image/png" href="https://www.gstatic.com/images/branding/product/1x/bigquery_64dp.png">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- HEADER -->
+    <header>
+      <div class="logo-container">
+        <div class="logo-icon" id="logo-badge">
+          <!-- Database/BigQuery themed SVG icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="22" height="22">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0v3.75m-16.5-3.75v3.75" />
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>BigQuery Release Notes</h1>
+          <p>Stay updated with the latest Google Cloud BigQuery additions, issues, and changes</p>
+        </div>
+      </div>
+      
+      <div class="header-controls">
+        <button id="theme-toggle" class="btn-icon" aria-label="Toggle Light/Dark Theme" title="Toggle Light/Dark Theme">
+          <!-- Icon injected dynamically -->
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTROL PANEL / TOOLBAR -->
+    <section class="toolbar">
+      <div class="search-filter-wrapper">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z" />
+          </svg>
+          <input type="text" id="search-input" class="search-input" placeholder="Search release notes by keywords, dates, types...">
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button id="refresh-btn" class="btn btn-secondary">
+          <span class="loading-indicator">
+            <svg class="spinner" viewBox="0 0 50 50">
+              <circle style="stroke: currentColor; stroke-linecap: round; stroke-dasharray: 90, 150; stroke-dashoffset: 0;" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
+          </span>
+          <span class="refresh-icon-static">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          </span>
+          Refresh Feed
+        </button>
+      </div>
+    </section>
+
+    <!-- FILTER PILLS -->
+    <section style="margin-bottom: 1.5rem;">
+      <div class="filter-pills" id="filter-pills">
+        <button class="pill active" data-filter="all">All Updates</button>
+        <button class="pill" data-filter="feature">Features</button>
+        <button class="pill" data-filter="announcement">Announcements</button>
+        <button class="pill" data-filter="issue">Issues</button>
+        <button class="pill" data-filter="breaking">Breaking Changes</button>
+        <button class="pill" data-filter="change">General Changes</button>
+      </div>
+    </section>
+
+    <!-- MAIN CONTAINER -->
+    <main class="main-content">
+      <div id="notes-container">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>Data fetched directly from the official <a href="https://docs.cloud.google.com/feeds/bigquery-release-notes.xml" target="_blank" rel="noopener noreferrer">BigQuery RSS Feed</a>.</p>
+      <p style="margin-top: 0.5rem; font-size: 0.8rem;">Developed as a Flask and Vanilla JS application. Click any update to select it.</p>
+    </footer>
+
+  </div>
+
+  <!-- TWEET COMPOSER SIDE DRAWER / OVERLAY -->
+  <div class="composer-overlay" id="composer-overlay">
+    <div class="composer-drawer" id="composer-drawer">
+      
+      <div class="composer-header">
+        <div class="composer-title">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="20" height="20">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          <span>Tweet Composer</span>
+        </div>
+        <button class="composer-close" id="composer-close" aria-label="Close Composer" title="Close Composer">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="composer-body">
+        <!-- Selected item preview context -->
+        <div class="source-context-card">
+          <div class="source-context-meta" id="source-meta">
+            Feature — June 17, 2026
+          </div>
+          <div class="source-context-text" id="source-text">
+            Loading preview context...
+          </div>
+        </div>
+
+        <!-- Editable Tweet area -->
+        <div class="tweet-input-wrapper">
+          <label class="tweet-label" for="tweet-textarea">Compose your Post:</label>
+          <textarea id="tweet-textarea" class="tweet-textarea" placeholder="What's happening?"></textarea>
+        </div>
+      </div>
+
+      <div class="composer-footer">
+        <div class="char-counter-wrapper">
+          <!-- Circular character SVG count representation -->
+          <svg class="progress-ring" width="40" height="40">
+            <circle class="progress-ring__circle" stroke="#1d9bf0" stroke-width="2.5" fill="transparent" r="18" cx="20" cy="20"/>
+          </svg>
+          <span class="char-counter-text" id="char-counter-text">280</span>
+        </div>
+        
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-secondary" id="copy-tweet-btn">Copy Text</button>
+          <button class="btn btn-primary" id="tweet-btn" style="background:#1d9bf0; color:white; box-shadow: 0 4px 10px rgba(29, 155, 240, 0.25);">Post to X</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
